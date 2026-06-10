@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SearchIcon, GlobeIcon, FileSearchIcon, BrainIcon, CheckCircleIcon, AlertCircle, Loader2, ArrowRightIcon } from "lucide-react";
+import { useApp } from "../context/AppContext";
 
 const STEPS = [
     { icon: <GlobeIcon size={22} />, label: "Connecting to browser", desc: "Creating cloud browser session..." },
@@ -12,6 +13,7 @@ const STEPS = [
 ];
 
 export default function Analyze() {
+    const {api} = useApp()
     const [url, setUrl] = useState("");
     const [analyzing, setAnalyzing] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
@@ -29,13 +31,26 @@ export default function Analyze() {
         setAnalyzing(true);
         setCurrentStep(0);
 
-        setTimeout(() => setCurrentStep(1), 1000);
-        setTimeout(() => setCurrentStep(2), 3000);
-        setTimeout(() => setCurrentStep(3), 6000);
-        setTimeout(() => {
-            setAnalyzing(false);
-            navigate(`/report/id123`);
-        }, 8000);
+        try{
+            //step 0: connecting
+            setCurrentStep(0)
+
+            const res =await api.post('api/analysis/analyze' , {
+                url: targetUrl.startsWith("http") ? targetUrl : `https://${targetUrl}`,
+            })
+
+            if(res.data.success){
+                throw new Error(res.data.message);
+            }
+
+            const id = res.data.analysisId;
+
+            //step 1: Scanning
+            setCurrentStep(1)
+            
+        }catch(error){
+
+        }
     };
 
     const handleSubmit = (e: React.SubmitEvent) => {

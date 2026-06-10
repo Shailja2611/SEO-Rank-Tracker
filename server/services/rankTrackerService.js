@@ -26,7 +26,7 @@ export async function rankTracker(keyword, targetDomain){
 
         }
         let found = null;
-          allresults = [];
+        let allresults = [];
         const cleanTarget= targetDomain.replace("www.","").toLowerCase();
         // searcg loop:titerate through up to 5 pages of google results
         for(let gPage =0 ;gPage < 5; gPage++){
@@ -52,7 +52,7 @@ export async function rankTracker(keyword, targetDomain){
                     if(!a || !a.href.startsWith("http") || a.href.includes('google.')) return null;
                     let s="",
                     c = a.parentElement;
-                    for(let j=0; j< 6 && j++;c= c.parentElement){
+                    for(let j=0; j< 6 && c; j++, c= c.parentElement){
                         const txt =c.innerText || "";
                         if(txt.length > h3.innerText.length+50){
                             s = (txt.split("\n").find((l)=>l.length > 30 && !l.includes(h3.innerText.substring(0,20))) || "").trim().substring(0,300);
@@ -63,10 +63,10 @@ export async function rankTracker(keyword, targetDomain){
                     }).filter(Boolean)
                 );
                 if(pageresults.length > 0) break;
-                await page.reload({waituntil: "networkidle"});
+                await page.reload({waitUntil: "networkidle"});
                 }catch(error){
                     if(retry === 2) break;
-                    await page.reload({waituntil: "networkidle"});
+                    await page.reload({waitUntil: "networkidle"});
                 }
             }
                 if(!pageresults.length) break;
@@ -92,8 +92,8 @@ export async function rankTracker(keyword, targetDomain){
                     targetDomain,
                     position: found ? found.position : null,
                     page: found?.page || null,
-                    title:d=found?.title || "",
-                    snippet: found.snippet || "",
+                    title: found?.title || "",
+                    snippet: found?.snippet || "",
                     competitors,
                     totalResultsScanned: allresults.length
                 }

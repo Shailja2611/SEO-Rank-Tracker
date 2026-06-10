@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
-import {userId} from "react";
 
 const rankHistorySchema = new mongoose.Schema({
     date: { type: Date, default: Date.now , required: true },
     position: { type: Number, default: null},
     page: { type: Number, default: null },
-    title:  {type:string , default: ""},
-    snippet: {type: string, default:""},
+    title:  {type: String , default: ""},
+    snippet: {type: String, default:""},
 },{ _id: false });
 
 const competitorSchema = new mongoose.Schema({

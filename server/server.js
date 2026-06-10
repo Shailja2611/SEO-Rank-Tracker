@@ -4,6 +4,7 @@ import "dotenv/config";
 import connectDB from './config/db.js';
 import authRouter from './routes/authRoutes.js';
 import rankRouter from './routes/rankRoute.js';
+import analysisRouter from './routes/analysisRoutes.js';
 
 connectDB()  
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.get('/',(req,res)=> res.send("server is running"));
 app.use('/api/auth', authRouter);
 app.use('/api/rank', rankRouter);
+app.use('/api/analysis' , analysisRouter)
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=> console.log(`server is running on port ${PORT}`));

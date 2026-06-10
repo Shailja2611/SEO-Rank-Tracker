@@ -90,7 +90,7 @@ export default function RankTracker() {
     const handleRefresh = async (id: string) => {
         setRefreshing(id);
         try{
-            await api.post(`api/rank/refresh/${id}`);
+            await api.put(`api/rank/${id}/refresh`);
             //update status to checking
             setKeywords(prev => prev.map(k => (k._id === id ? { ...k, status: "checking" } : k)));
             //poll for completion
@@ -117,7 +117,7 @@ export default function RankTracker() {
         if (!confirm("Delete this keyword tracking?")) return;
         setDeleting(id);
         try{
-            const res = await api.delete(`api/rank/delete/${id}`);
+            const res = await api.delete(`api/rank/${id}`);
             if(res.data.success){
                 setKeywords(prev => prev.filter(k => k._id !== id));
             }
@@ -129,7 +129,7 @@ export default function RankTracker() {
 
     const handleToggle = async (id: string) => {
         try{
-            const res = await api.delete(`api/rank/toggle/${id}`);
+            const res = await api.put(`api/rank/${id}/toggle`);
             if(res.data.success){
                 setKeywords(prev => prev.map(k => (k._id === id ? {...k , active: res.data.tracking.active} : k)));
             }

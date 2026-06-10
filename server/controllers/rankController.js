@@ -24,6 +24,7 @@ export const addKeyword = async (req, res) => {
         if(existing) return res.status(400).json({ success: false, message: "Already tracking this keyword for the given URL" });
 
         //create new entry
+        console.log(req.user._id);
         const tracking = await KeywordTracking.create({
             userId: req.user._id,
             keyword: keyword.toLowerCase().trim(),
