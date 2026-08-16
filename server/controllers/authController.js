@@ -61,7 +61,8 @@ export const login=async(req,res)=>{
 //get current user
 export const getCurrentUser = async (req, res) => {
     try {
-        const user = await User.findById(req.userID).select("-password");
+        const user = await User.findById(req.user._id).select("-password");
+        console.log("Current user:", user);
         if(!user){
             return res.status(400).json({success:false,message:"User not found"})
         }

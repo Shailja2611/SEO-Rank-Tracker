@@ -1,6 +1,8 @@
 import {GoogleGenAI , Type} from '@google/genai'
 
-const ai = new GoogleGenAI({apiKey: proccess.env.GEMINI_API_KEY})
+const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
+console.log("hiii")
+console.log("Gemini API Key:", process.env.GEMINI_API_KEY)
 
 // Response schema for structured SEO analysis
 const seoAnalysisSchema = {
@@ -120,7 +122,15 @@ export async function analyzerSeoData(scrapedData){
                 responseSchema: seoAnalysisSchema,
             }
         })
+        console.log("Gemini API response:", response);
+        if(!response || !response.text){
+            throw new Error("No response from Gemini API");
+        }
         const analysis =JSON.parse(response.text)
+        console.log("Gemini analysis result:", analysis);
+        if(!analysis || !analysis.overallScore){
+            throw new Error("Invalid analysis result from Gemini API");
+        }
         return  {success: true, data:analysis}
     }catch(error){
         console.error("Gemini analysis error:" , error.message);

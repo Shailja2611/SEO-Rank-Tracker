@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import ScoreGauge from "../components/ScoreGauge";
 import IssueCard from "../components/IssueCard";
 import { ArrowLeft, Globe, Clock, FileText, Image, Link2, Heading, Tag, AlertCircle, ExternalLink, Type, Search } from "lucide-react";
-import { dummyWebsiteAnalysis } from "../assets/assets";
+import { useApp } from "../context/AppContext";
 
 interface AnalysisData {
     _id: string;
@@ -56,17 +56,31 @@ interface AnalysisData {
 }
 
 export default function Report() {
+    const {api} = useApp()
     const { id } = useParams();
     const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error] = useState("");
+    const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("overview");
 
     const fetchAnalysis = async () => {
-        setTimeout(() => {
-            setAnalysis(dummyWebsiteAnalysis);
-            setLoading(false);
-        }, 1500);
+        try{
+            const res = await api.get(`/api/analysis/${id}`)
+            if(res.data.success){
+                if(res.data.analysis.status === "processing"){
+                    //poll for completion
+                    setTimeout(fetchAnalysis,2000);
+                    return
+                }
+                setAnalysis(res.data.analysis)
+                console.log("Analysis data:", res.data.analysis);
+            }else{
+                setError("Analysis not found")
+            }
+        }catch(error){
+            setError("failed to load analysis")
+        }
+        setLoading(false)
     };
 
     const getScoreClass = (s: number) => {
@@ -290,15 +304,30 @@ export default function Report() {
                                     </h3>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div className="glass rounded-xl p-4 text-center">
-                                            <p className="text-2xl font-bold">{analysis.images.total}</p>
-                                            <p className="text-xs text-gray-500">Total</p>
+                                            <p className="text-2xl font-bold">
+                                                {analysis.images?.total ?? 0}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {(analysis.images?.total ?? 0) > 0 ? "Total" : "No images"}
+                                            </p>
                                         </div>
                                         <div className="glass rounded-xl p-4 text-center">
-                                            <p className="text-2xl font-bold text-success">{analysis.images.withAlt}</p>
+                                            <p className="text-2xl font-bold text-success">
+                                                {analysis.images?.withAlt ?? 0}
+                                            </p>
                                             <p className="text-xs text-gray-500">With Alt</p>
                                         </div>
+
                                         <div className="glass rounded-xl p-4 text-center">
-                                            <p className={`text-2xl font-bold ${analysis.images.missingAlt > 0 ? "text-danger" : "text-success"}`}>{analysis.images.missingAlt}</p>
+                                            <p
+                                                className={`text-2xl font-bold ${
+                                                    (analysis.images?.missingAlt ?? 0) > 0
+                                                        ? "text-danger"
+                                                        : "text-success"
+                                                }`}
+                                            >
+                                                {analysis.images?.missingAlt ?? 0}
+                                            </p>
                                             <p className="text-xs text-gray-500">Missing Alt</p>
                                         </div>
                                     </div>

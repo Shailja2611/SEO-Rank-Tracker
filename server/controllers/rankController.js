@@ -34,7 +34,13 @@ export const addKeyword = async (req, res) => {
         })
 
         res.status(201).json({ success: true, message: "Keyword added for tracking", tracking });
-        keywordTracking(tracking);
+        keywordTracking(tracking).catch(async (err) => {
+            console.error("Background rank tracking failed:", err);
+            await KeywordTracking.findByIdAndUpdate(tracking._id, {
+                status: "failed",
+                lastChecked: new Date(),
+            }).catch((e) => console.error("Failed to mark tracking as failed:", e));
+        });
 
     } catch(error){
         console.error("Add Keyword Error", error.message);

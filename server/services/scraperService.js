@@ -2,47 +2,84 @@ import { chromium } from "playwright-core";
 import Browserbase from "@browserbasehq/sdk";
 
 const bb = new Browserbase({
-  apiKey: process.env.BROWSERBASE_API_KEY,
+    apiKey: process.env.BROWSERBASE_API_KEY,
 });
 
-export async function scraperUrl(url){
+export async function scraperUrl(url) {
     let browser;
-    try{
-        const session = await bb.sessions.create({browserSettings : {blockAds : true}});
+
+    try {
+        const session = await bb.sessions.create({
+            browserSettings: {
+                blockAds: true,
+            },
+        });
+
         browser = await chromium.connectOverCDP(session.connectUrl);
-        const deafultContext = browser.contexts()[0];
-        const page = deafultContext.pages()[0];
+
+        const defaultContext = browser.contexts()[0];
+        const page = defaultContext.pages()[0];
+
         page.setDefaultNavigationTimeout(30000);
+
         const startTime = Date.now();
+
         let response;
-        try{
-            response = await page.goto(url , {waitUntil: "domcontentloaded"})
-        }catch(navError){
-            await browser.close().catch(()=>{});
-            return {success: false, error: navError.message}
-        }
-        const loadTime = Date.now() - startTime;
-        await page.waitForTimeout(2000);
-        //extract all seo=relevant data from the rendered page
-        const scrapedData = await page.evaluate(()=> {
-            const getMeta = (name)=> {
-                const el = document.querySelector(`meta[name="${name}"]`) || document.querySelector(`meta[property="${name}"]`);
-                return el ? el.getAttribute("content") || "" : "";
+
+        try {
+            response = await page.goto(url, {
+                waitUntil: "domcontentloaded",
+            });
+        } catch (navError) {
+            await browser.close().catch(() => {});
+
+            return {
+                success: false,
+                error: navError.message,
             };
+        }
+
+        const loadTime = Date.now() - startTime;
+
+        await page.waitForTimeout(2000);
+
+        // Extract SEO-relevant data
+        const scrapedData = await page.evaluate(() => {
+            const getMeta = (name) => {
+                const el =
+                    document.querySelector(`meta[name="${name}"]`) ||
+                    document.querySelector(`meta[property="${name}"]`);
+
+                return el
+                    ? el.getAttribute("content") || ""
+                    : "";
+            };
+
             const title = document.title || "";
             const description = getMeta("description");
-            const canonical = document.querySelector('link[rel="canonical"]')?.href || "";
-            const robots =getMeta("robots");
+            const canonical =
+                document.querySelector('link[rel="canonical"]')?.href || "";
+            const robots = getMeta("robots");
             const ogTitle = getMeta("og:title");
             const ogDescription = getMeta("og:description");
             const ogImage = getMeta("og:image");
             const twitterCard = getMeta("twitter:card");
             const viewport = getMeta("viewport");
-            const charsetMeta = document.querySelector('meta[charset]');
-            const charset = charsetMeta ? charsetMeta.getAttribute("charset") || "" : "";
 
-            const h1Elements =document.querySelectorAll("h1");
-            const h1Texts = Array.from(h1Elements).map((el) =>el.textContent.trim() || "");
+            const charsetMeta =
+                document.querySelector("meta[charset]");
+
+            const charset = charsetMeta
+                ? charsetMeta.getAttribute("charset") || ""
+                : "";
+
+            // Headings
+            const h1Elements = document.querySelectorAll("h1");
+
+            const h1Texts = Array.from(h1Elements).map(
+                (el) => el.textContent?.trim() || ""
+            );
+
             const headings = {
                 h1: document.querySelectorAll("h1").length,
                 h2: document.querySelectorAll("h2").length,
@@ -52,56 +89,131 @@ export async function scraperUrl(url){
                 h6: document.querySelectorAll("h6").length,
                 h1Texts,
             };
-            const alllinks =Array.from(document.querySelectorAll("a[href]"));
+
+            // Links
+            const allLinks = Array.from(
+                document.querySelectorAll("a[href]")
+            );
+
             const currentHost = window.location.hostname;
-            let internalLinks =0;
+
+            let internalLinks = 0;
             let externalLinks = 0;
-            allLinks.forEach((link)=>{
-                try{
-                    const href =link.href;
-                    if(href.startsWith("mailto:") || href.startsWith("tel:")) return ;
-                    const linkUrl =new URL(href);
-                    if(linkUrl.hostname === currentHost) {
+
+            allLinks.forEach((link) => {
+                try {
+                    const href = link.href;
+
+                    if (
+                        href.startsWith("mailto:") ||
+                        href.startsWith("tel:")
+                    ) {
+                        return;
+                    }
+
+                    const linkUrl = new URL(href);
+
+                    if (linkUrl.hostname === currentHost) {
                         internalLinks++;
                     } else {
                         externalLinks++;
                     }
-                }catch(error){
-
+                } catch (error) {
+                    // Ignore invalid URLs
                 }
-            })
-            const allImages = Array.from(document.querySelectorAll("img"));
-            const missingAlt = allImages.filter(img => !img.alt || img.alt.trim() === "").length;
+            });
 
+            // Images
+            const allImages = Array.from(
+                document.querySelectorAll("img")
+            );
+
+            const missingAlt = allImages.filter(
+                (img) => !img.alt || img.alt.trim() === ""
+            ).length;
+
+            // Text
             const bodyText = document.body?.innerText || "";
-            const wordCount = bodyText.split(/\s+/).filter(w => w.length > 0).length;
-            const pageSize = document.documentElement.outerHTML.length;
+
+            const wordCount = bodyText
+                .split(/\s+/)
+                .filter((word) => word.length > 0)
+                .length;
+
+            const pageSize =
+                document.documentElement.outerHTML.length;
+
             return {
-                metData: { title , description, canonical , robots , ogTitle, 
-                    ogDescription , ogImage , twitterCard , viewport , charset },
+                metaData: {
+                    title,
+                    description,
+                    canonical,
+                    robots,
+                    ogTitle,
+                    ogDescription,
+                    ogImage,
+                    twitterCard,
+                    viewport,
+                    charset,
+                },
+
                 headings,
-                links : { internal : internalLinks, external : externalLinks , total : allLinks.length },
-                images : {total: allImages.length , missingAlt , withAlt: allImages.length - missingAlt},
+
+                links: {
+                    internal: internalLinks,
+                    external: externalLinks,
+                    total: allLinks.length,
+                },
+
+                images: {
+                    total: allImages.length,
+                    missingAlt,
+                    withAlt: allImages.length - missingAlt,
+                },
+
                 wordCount,
                 pageSize,
-                bosyText: bodyText.substring(0,3000),
-            }
-        })
-        const statusCode =response?.status() || 0;
+
+                bodyText: bodyText.substring(0, 3000),
+            };
+        });
+
+        const statusCode = response?.status() || 0;
+
         await page.close();
         await browser.close();
+
         return {
             success: true,
-            data: {...scrapedData,loadTime , statusCode, url}
-        }
-    }catch(error){
-        console.error("[SCRAPER] Playwright session failed :", error.message);
-        if(browser){
-            try{
+            data: {
+                ...scrapedData,
+                loadTime,
+                statusCode,
+                url,
+            },
+        };
+
+    } catch (error) {
+        console.error(
+            "[SCRAPER] Playwright session failed:",
+            error.message
+        );
+
+        if (browser) {
+            try {
                 await browser.close();
-            }catch(error){
-                console.error("[SCRAPER] Failed to close browser :", error.message);
+            } catch (closeError) {
+                console.error(
+                    "[SCRAPER] Failed to close browser:",
+                    closeError.message
+                );
             }
         }
+
+        // IMPORTANT: Always return an object
+        return {
+            success: false,
+            error: error.message,
+        };
     }
 }

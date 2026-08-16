@@ -39,7 +39,7 @@ export default function Analyze() {
                 url: targetUrl.startsWith("http") ? targetUrl : `https://${targetUrl}`,
             })
 
-            if(res.data.success){
+            if(!res.data.success){
                 throw new Error(res.data.message);
             }
 
@@ -47,9 +47,44 @@ export default function Analyze() {
 
             //step 1: Scanning
             setCurrentStep(1)
-            
-        }catch(error){
 
+            //poll for completion
+            let attempts =0;
+            const maxAttempts = 60; // 2 minute max
+            pollRef.current = setInterval(async ()=>{
+                attempts++;
+                if(attempts > maxAttempts){
+                    if(pollRef.current){
+                        clearInterval(pollRef.current)
+                        setError("Analysis is taking longer than expected.check your history later.");
+                    }
+                    setAnalyzing(false)
+                    return 
+                }
+                try{
+                    const check = await api.get(`/api/analysis/${id}`);
+                    const analysis = check.data.analysis;
+
+                    if(analysis.status === "completed"){
+                        if(pollRef.current) clearInterval(pollRef.current)
+                            setCurrentStep(3)
+                        setTimeout(()=> navigate(`/report/${id}`) , 1000)
+                    }
+                    else if(analysis.status === "failed"){
+                        if(pollRef.current) clearInterval(pollRef.current)
+                            setError("Analysis failed . The AI model might be down.")
+                    }else{
+                        //still processing = advance visual steps
+                        if(attempts > 5) setCurrentStep(2)
+                    }
+                }catch{
+                    //ignore polling errors
+                }
+            },2000)
+            
+        }catch(err: any){
+            setError(err.response?.data?.message || err.message || "Failed to start analysis");
+            setAnalyzing(false)
         }
     };
 
