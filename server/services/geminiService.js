@@ -1,8 +1,7 @@
 import {GoogleGenAI , Type} from '@google/genai'
 
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
-console.log("hiii")
-console.log("Gemini API Key:", process.env.GEMINI_API_KEY)
+console.log("Gemini API Key:", !!process.env.GEMINI_API_KEY)
 
 // Response schema for structured SEO analysis
 const seoAnalysisSchema = {
