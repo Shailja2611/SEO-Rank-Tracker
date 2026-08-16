@@ -17,7 +17,7 @@ export async function keywordTracking(tracking){
             // Successful result
             if (
                 result.success &&
-                result.data.totalResultsScanned > 0
+                result.data.totalResultsScanned !== null
             ) {
                 break;
             }

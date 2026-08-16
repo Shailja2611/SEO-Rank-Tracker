@@ -4,6 +4,8 @@ import "dotenv/config";
  * Search Google through Serper and find the ranking
  * position of a target domain.
  *
+ * Scans 2 Google pages (up to ~20 organic positions).
+ *
  * @param {string} keyword
  * @param {string} targetDomain
  * @returns {Promise<object>}
@@ -39,80 +41,119 @@ export async function rankTracker(keyword, targetDomain) {
         console.log(`Normalized target: ${cleanTarget}`);
 
         // --------------------------------------------------
-        // 3. Call Serper API
+        // 3. Search 2 Google pages
         // --------------------------------------------------
 
-        console.log("🌐 Searching Google through Serper...");
+        const allResults = [];
 
-        const response = await fetch(
-            "https://google.serper.dev/search",
-            {
-                method: "POST",
-
-                headers: {
-                    "X-API-KEY": process.env.SERPER_API_KEY,
-                    "Content-Type": "application/json",
-                },
-
-                body: JSON.stringify({
-                    q: keyword,
-                    gl: "us",
-                    hl: "en",
-                    num: 100,
-                }),
-            }
-        );
-
-        // --------------------------------------------------
-        // 4. Handle Serper API errors
-        // --------------------------------------------------
-
-        if (!response.ok) {
-            const errorText = await response.text();
-
-            throw new Error(
-                `Serper API error ${response.status}: ${errorText}`
+        for (let currentPage = 1; currentPage <= 2; currentPage++) {
+            console.log(
+                `🌐 Searching Google through Serper - page ${currentPage}...`
             );
+
+            const response = await fetch(
+                "https://google.serper.dev/search",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "X-API-KEY": process.env.SERPER_API_KEY,
+                        "Content-Type": "application/json",
+                    },
+
+                    body: JSON.stringify({
+                        q: keyword,
+                        gl: "us",
+                        hl: "en",
+
+                        // 10 results per Google page
+                        num: 10,
+
+                        // IMPORTANT:
+                        // page 1 = positions 1-10
+                        // page 2 = positions 11-20
+                        page: currentPage,
+                    }),
+                }
+            );
+
+            // --------------------------------------------------
+            // 4. Handle Serper API errors
+            // --------------------------------------------------
+
+            if (!response.ok) {
+                const errorText = await response.text();
+
+                throw new Error(
+                    `Serper API error ${response.status}: ${errorText}`
+                );
+            }
+
+            const data = await response.json();
+
+            const organicResults = Array.isArray(data.organic)
+                ? data.organic
+                : [];
+
+            console.log(
+                `📊 Page ${currentPage}: ${organicResults.length} organic results`
+            );
+
+            // --------------------------------------------------
+            // 5. Add results to combined array
+            // --------------------------------------------------
+
+            for (let index = 0; index < organicResults.length; index++) {
+                const result = organicResults[index];
+
+                const url = result.link || "";
+
+                allResults.push({
+                    position:
+                        result.position ||
+                        ((currentPage - 1) * 10) + index + 1,
+
+                    domain: normalizeDomain(url),
+
+                    title: result.title || "",
+
+                    snippet: result.snippet || "",
+
+                    url,
+                });
+            }
         }
 
-        const data = await response.json();
-
-        console.log("✅ Serper response received");
-
         // --------------------------------------------------
-        // 5. Extract organic results
+        // 6. Remove duplicate URLs
         // --------------------------------------------------
 
-        const organicResults = Array.isArray(data.organic)
-            ? data.organic
-            : [];
-
-        console.log(
-            `📊 Organic results received: ${organicResults.length}`
+        const uniqueResults = Array.from(
+            new Map(
+                allResults.map((result) => [
+                    result.url,
+                    result,
+                ])
+            ).values()
         );
 
-        // --------------------------------------------------
-        // 6. Convert Serper results to our format
-        // --------------------------------------------------
+        // Sort by Google position
+        uniqueResults.sort(
+            (a, b) => a.position - b.position
+        );
 
-        const allResults = organicResults.map((result, index) => {
-            const url = result.link || "";
-
-            return {
-                position: result.position || index + 1,
-                domain: normalizeDomain(url),
-                title: result.title || "",
-                snippet: result.snippet || "",
-                url,
-            };
-        });
+        console.log(
+            `📊 Total organic results scanned: ${uniqueResults.length}`
+        );
 
         // --------------------------------------------------
         // 7. Find target domain
         // --------------------------------------------------
 
-        const found = allResults.find((result) => {
-            const resultDomain = normalizeDomain(result.domain);
+        const found = uniqueResults.find((result) => {
+            const resultDomain = normalizeDomain(
+                result.domain
+            );
 
             return (
                 resultDomain === cleanTarget ||
@@ -126,7 +167,7 @@ export async function rankTracker(keyword, targetDomain) {
         // --------------------------------------------------
 
         const competitorsAhead = found
-            ? allResults
+            ? uniqueResults
                   .filter(
                       (result) =>
                           result.position < found.position
@@ -175,7 +216,7 @@ export async function rankTracker(keyword, targetDomain) {
 
             competitorsAheadCount,
 
-            totalResultsScanned: allResults.length,
+            totalResultsScanned: uniqueResults.length,
         };
 
         // --------------------------------------------------
@@ -200,12 +241,17 @@ export async function rankTracker(keyword, targetDomain) {
             );
         } else {
             console.log(
-                "❌ Position: Not found in scanned results"
+                "❌ Position: Not found in first 2 pages"
             );
         }
 
         console.log(
-            `📊 Results scanned: ${allResults.length}`
+            `📊 Results scanned: ${uniqueResults.length}`
+        );
+
+        console.log(
+            "📋 Results:",
+            uniqueResults
         );
 
         console.log("--------------------------------\n");
@@ -260,16 +306,6 @@ export async function rankTracker(keyword, targetDomain) {
 /**
  * Normalize a domain/URL so domain comparisons
  * are reliable.
- *
- * Examples:
- *
- * www.imdb.com
- * https://www.imdb.com/
- * http://imdb.com/title/123
- *
- * all become:
- *
- * imdb.com
  */
 function normalizeDomain(domain) {
     if (!domain) {
