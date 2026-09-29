@@ -9,6 +9,8 @@ It allows authenticated users to:
 - view historical audits and rank tracking data
 - manage a protected dashboard with login and registration
 
+![Hero section](docs/screenshots/hero.png)
+
 ## Tech Stack
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS
@@ -49,6 +51,27 @@ SEO-Rank-Tracker/
 - JWT-based session protection on API routes
 - Access protected dashboard pages only after authentication
 - Manage analysis and keyword history per user
+
+## Live Demo
+
+The application is deployed and can be accessed here:
+
+- Live app: https://seo-rank-tracker-sand.vercel.app/
+
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%"><img src="docs/screenshots/features.png" alt="Features overview" /></td>
+      <td width="50%"><img src="docs/screenshots/Analyze.png" alt="SEO analysis page" /></td>
+    </tr>
+    <tr>
+      <td width="50%"><img src="docs/screenshots/trackKeyword.png" alt="Keyword tracking" /></td>
+      <td width="50%"><img src="docs/screenshots/hero.png" alt="Hero section" /></td>
+    </tr>
+  </table>
+</div>
 
 ## Prerequisites
 
