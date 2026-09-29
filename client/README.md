@@ -1,74 +1,120 @@
-# SEO Rank Tracker
+# Client
 
-**SEO Rank Tracker** is an AI-powered SEO analyzer built with React, Vite, and Tailwind CSS. It provides instant SEO audits, performance scores, keyword analysis, and actionable recommendations for any website.
+This is the frontend for the SEO Rank Tracker application. It is a React + Vite + TypeScript dashboard for analyzing websites, viewing SEO reports, tracking keyword positions, and monitoring historical results.
+
+## Stack
+
+- React 19
+- TypeScript
+- Vite
+- React Router
+- Tailwind CSS
+- Axios
+- Lucide icons
+- React Hot Toast
 
 ## Features
 
-- **Instant SEO Audits:** Get comprehensive insights into your website's SEO performance.
-- **Performance Scores:** Analyze page speed and Core Web Vitals.
-- **Keyword Analysis:** Discover and optimize for relevant keywords.
-- **Actionable Recommendations:** Receive step-by-step guidance to improve your rankings.
-- **AI-Powered Insights:** Leverage AI to analyze content quality and structure.
+- landing page and marketing sections
+- user registration and login flow
+- protected dashboard and route guards
+- instant SEO analysis workflow
+- report detail pages with score summaries and issue breakdowns
+- keyword tracker management
+- rank history charting and detail views
+- historical audit list and deletion support
 
-## Tech Stack
+## Project Structure
 
-- **Frontend:** React 19, React Router, Tailwind CSS 4
-- **Icons:** Lucide React, React Simple Icons
-- **Build Tool:** Vite
-- **Language:** TypeScript
+```text
+client/
+├── public/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   ├── context/
+│   ├── pages/
+│   ├── App.tsx
+│   ├── index.css
+│   └── main.tsx
+├── .env
+├── eslint.config.js
+├── index.html
+├── package.json
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+├── vercel.json
+└── README.md
+```
 
-## Getting Started
+## Environment Variables
 
-### Prerequisites
+Create a `.env` file in this folder:
 
-- Node.js (v18 or higher recommended)
-- npm or yarn
+```env
+VITE_BACKEND_URL=http://localhost:5000
+```
 
-### Installation
+This is used by the app context to send requests to the backend API.
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/GreatStackDev/seo-rank-tracker.git
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd seo-rank-tracker
-    ```
-3. Install dependencies:
-    ```bash
-    npm install
-    ```
+## Installation
 
-### Running the Development Server
+```bash
+cd client
+npm install
+```
 
-Start the Vite development server:
+## Run Locally
 
 ```bash
 npm run dev
 ```
 
-### Building for Production
+The app usually runs at:
 
-Create a production build:
+```text
+http://localhost:5173
+```
+
+## Production Build
 
 ```bash
 npm run build
 ```
 
-To preview the production build locally:
+Preview the production build locally:
 
 ```bash
 npm run preview
 ```
 
-## Contributing
+## Main Routes
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details.
+- `/` — landing page
+- `/login` — login page
+- `/register` — registration page
+- `/dashboard` — authenticated overview page
+- `/analyze` — URL analysis form
+- `/history` — previously completed analyses
+- `/report/:id` — detailed SEO report
+- `/rank-tracker` — keyword tracking dashboard
+- `/rank/:id` — keyword tracking history details
 
-## Code of Conduct
+## Notes
 
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating in our community.
+- The frontend expects the backend to be running on the configured `VITE_BACKEND_URL`.
+- Protected routes are enforced by the `ProtectedRoute` component and authenticated user state.
+- Report status updates are handled asynchronously, so the page may poll or redirect after the initial analysis request.
 
-## License
+## Scripts
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+```json
+{
+  "dev": "vite",
+  "build": "tsc -b && vite build",
+  "lint": "eslint .",
+  "preview": "vite preview"
+}
+```
